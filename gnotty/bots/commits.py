@@ -13,6 +13,10 @@ class CommitMixin(object):
     """
 
     def handle_payload(self, payload):
+        for commit in payload.commits():
+            self.message_channel(payload.parse_commit(commit))
+
+    def handle_payload_old(self, payload):
         commit = lambda c: "%s - %s" % (c["message"], payload.author(c))
         messages = [commit(c) for c in payload.commits()]
         if len(messages) == 1:
@@ -84,15 +88,26 @@ class BitBucketPayload(CommitPayload):
         return "%s%s" % (host, self.payload["repository"]["absolute_url"])
 
     def author(self, commit):
-        return commit["raw_author"].split("<")[0]
+        return commit["raw_author"].split("<")[0].strip()
 
     def commit_url(self, commit):
-        repo_url = self.repo_url(self.payload)
+        repo_url = self.repo_url()
         return "%schangeset/%s/" % (repo_url, commit["node"])
 
     def diff_url(self):
         first, last = self.commits()[0]["node"], self.commits()[-1]["node"]
         return "%scompare/%s..%s" % (self.repo_url(), first, last)
+
+    def parse_commit(self, cm):
+        msg = "%s: %s * %s %s " % \
+                (cm['branch'], self.author(cm), cm['node'], cm['revision'])
+        nfiles = len(cm['files'])
+        if nfiles == 1:
+            msg += "%s: " % cm['files'][0]['file']
+        else:
+            msg += "(%i files): " % nfiles
+        msg += cm['message']
+        return msg
 
 
 class BitBucketMixin(CommitMixin):
