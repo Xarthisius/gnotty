@@ -56,10 +56,16 @@ class CommandMixin(object):
             link = "https://bitbucket.org/yt_analysis/yt/issue/%i" % ino
             title = payload['title']
             status = payload['status']
-            reporter = "%s %s" % (payload['reported_by']['first_name'],
-                                  payload['reported_by']['last_name'])
-            assignee = "%s %s" % (payload['responsible']['first_name'],
-                                  payload['responsible']['last_name'])
+            try:
+                rep = payload['reported_by']
+            except KeyError:
+                rep = {'first_name': "John", 'last_name': "Doe"}
+            reporter = "%s %s" % (rep['first_name'], rep['last_name'])
+            try:
+                asg = payload['responsible']
+            except KeyError:
+                asg = {'first_name': "unassigned", 'last_name': ""}
+            assignee = "%s %s" % (asg['first_name'], asg['last_name'])
             reply.append("%s \"%s\"; %s; %s -> %s" % (link, title, status,
                                                       reporter, assignee))
         if len(reply) > 0:
