@@ -25,6 +25,10 @@ class CommitBot(GitHubMixin, BitBucketMixin, BaseBot):
     pass
 
 
+class YTBot(BitBucketMixin, CommandMixin, BaseBot):
+    pass
+
+
 class CommandBot(CommandMixin, BaseBot):
     pass
 
