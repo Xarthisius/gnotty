@@ -1,3 +1,6 @@
+import re
+import json
+import requests
 
 from datetime import datetime
 from inspect import getdoc, getargspec
@@ -24,6 +27,54 @@ class CommandMixin(object):
         nicknames = [s.lstrip("@+") for s in event.arguments()[-1].split()]
         for nickname in nicknames:
             self.joined[nickname] = datetime.now()
+
+    @events.on("pubmsg")
+    def respond(self, connection, event):
+        author = event.source().split('!')[0].strip()
+        for message in event.arguments():
+            reply = self.handle_PR(message)
+            if reply is not None:
+                self.message_channel("%s: %s" % (author, reply))
+            reply = self.handle_issue(message)
+            if isinstance(reply, list):
+                for msg in reply:
+                    self.message_channel("%s: %s" % (author, msg))
+
+    def handle_issue(self, msg):
+        issues = re.findall("#[0-9]+", msg)
+        if len(issues) == 0:
+            return None
+        url = \
+            "https://api.bitbucket.org/1.0/repositories/yt_analysis/yt/issues"
+        reply = []
+        for issue in issues:
+            ino = int(issue[1:])
+            r = requests.get('%s/%i' % (url, ino))
+            if r.status_code != 200:
+                continue
+            payload = json.loads(r.text)
+            link = "https://bitbucket.org/yt_analysis/yt/issue/%i" % ino
+            title = payload['title']
+            status = payload['status']
+            reporter = "%s %s" % (payload['reported_by']['first_name'],
+                                  payload['reported_by']['last_name'])
+            assignee = "%s %s" % (payload['responsible']['first_name'],
+                                  payload['responsible']['last_name'])
+            reply.append("%s \"%s\"; %s; %s -> %s" % (link, title, status,
+                                                      reporter, assignee))
+        if len(reply) > 0:
+            return reply
+        else:
+            return None
+
+    def handle_PR(self, msg):
+        prs = re.findall("PR[0-9]+", msg)
+        if len(prs) == 0:
+            return None
+        reply = ""
+        for pr in prs:
+            reply += " %s" % pr
+        return "If I were smarter I'd show you:%s" % reply
 
     @events.on("join")
     def handle_join(self, connection, event):

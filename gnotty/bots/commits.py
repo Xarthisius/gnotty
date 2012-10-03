@@ -100,7 +100,7 @@ class BitBucketPayload(CommitPayload):
 
     def parse_commit(self, cm):
         msg = "%s: %s * %s %s " % \
-                (cm['branch'], self.author(cm), cm['node'], cm['revision'])
+            (cm['branch'], self.author(cm), cm['node'], cm['revision'])
         nfiles = len(cm['files'])
         if nfiles == 1:
             msg += "%s: " % cm['files'][0]['file']

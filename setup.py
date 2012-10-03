@@ -21,6 +21,7 @@ setup(
         "gevent-socketio==0.3.5-beta",
         "irc==2.0",
         "daemon==1.0",
+        "requests",
         "sphinx-me",
     ],
     entry_points="""
