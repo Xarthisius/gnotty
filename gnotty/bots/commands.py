@@ -96,9 +96,8 @@ class CommandMixin(object):
         which when given, will show help for that command.
         """
         if command_name is None:
-            return ("Type %scommands for a list of all commands. Type "
-                    "%shelp [command] to see help for a specific command." %
-                    (self.prefix_call, self.prefix_call))
+            return ("Type !commands for a list of all commands. Type "
+                    "!help [command] to see help for a specific command.")
         try:
             command = self.commands_dict()[command_name]
         except KeyError:
