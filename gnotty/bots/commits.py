@@ -1,4 +1,4 @@
-
+import time
 from json import loads
 
 from gnotty.bots import events
@@ -15,6 +15,7 @@ class CommitMixin(object):
     def handle_payload(self, payload):
         for commit in payload.commits():
             self.message_channel(payload.parse_commit(commit))
+            time.sleep(0.5)
 
     def handle_payload_old(self, payload):
         commit = lambda c: "%s - %s" % (c["message"], payload.author(c))
