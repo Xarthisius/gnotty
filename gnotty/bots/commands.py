@@ -1,6 +1,8 @@
 import re
 import json
 import requests
+import urllib
+from bs4 import BeautifulSoup
 
 from datetime import datetime
 from inspect import getdoc, getargspec
@@ -32,13 +34,11 @@ class CommandMixin(object):
     def respond(self, connection, event):
         author = event.source().split('!')[0].strip()
         for message in event.arguments():
-            reply = self.handle_PR(message)
-            if reply is not None:
-                self.message_channel("%s: %s" % (author, reply))
             reply = self.handle_issue(message)
             if isinstance(reply, list):
                 for msg in reply:
                     self.message_channel("%s: %s" % (author, msg))
+            self.handle_PR(message)
 
     def handle_issue(self, msg):
         issues = re.findall("#[0-9]+", msg)
@@ -79,8 +79,27 @@ class CommandMixin(object):
             return None
         reply = ""
         for pr in prs:
-            reply += " %s" % pr
-        return "If I were smarter I'd show you:%s" % reply
+            url = 'https://bitbucket.org/yt_analysis/yt/pull-request/'+pr[2:]
+            print url
+            html_file = urllib.urlretrieve(url)
+            f = open(html_file[0], 'r')
+            html_doc = "".join([line.strip() for line in f.readlines()])
+            f.close()
+            soup = BeautifulSoup(html_doc)
+
+            title_raw = soup.title.string
+            r_pr = re.compile('''Pull request #(.*) Bitbucket''')
+            try:
+                title = re.search(r_pr, title_raw).group(1)[:-1]
+            except:
+                print "something went wrong"
+                return
+
+            author = soup.find_all('div', attrs={'class': 'summary'})[0].a.contents[0]
+
+            msg = "PR %s by %s - %s" % (title, author, url)
+            self.message_channel(msg)
+
 
     @events.on("join")
     def handle_join(self, connection, event):
